@@ -1,0 +1,49 @@
+{
+    "name": "alxmerino/craft-locked-entries",
+    "description": "Gives users the ability to mark entries as 'locked' so only they can edit them",
+    "type": "craft-plugin",
+    "license": "mit",
+    "support": {
+        "email": "rene@amayamedia.com",
+        "issues": "https://github.com/alxmerino/craft-locked-entries/issues?state=open",
+        "source": "https://github.com/alxmerino/craft-locked-entries",
+        "docs": "https://github.com/alxmerino/craft-locked-entries",
+        "rss": "https://github.com/alxmerino/craft-locked-entries/releases.atom"
+    },
+    "require": {
+        "php": ">=8.0.2",
+        "craftcms/cms": "^4.x"
+    },
+    "require-dev": {
+        "craftcms/ecs": "dev-main",
+        "craftcms/phpstan": "dev-main"
+    },
+    "autoload": {
+        "psr-4": {
+            "alxmerino\\lockedentries\\": "src/"
+        }
+    },
+    "extra": {
+        "handle": "locked-entries",
+        "name": "Locked Entries",
+        "developer": "Rene Merino",
+        "documentationUrl": "https://github.com/alxmerino/craft-locked-entries",
+        "class": "alxmerino\\lockedentries\\LockedEntries"
+    },
+    "scripts": {
+        "check-cs": "ecs check --ansi",
+        "fix-cs": "ecs check --ansi --fix",
+        "phpstan": "phpstan --memory-limit=1G"
+    },
+    "config": {
+        "sort-packages": true,
+        "platform": {
+            "php": "8.0.2"
+        },
+        "allow-plugins": {
+            "yiisoft/yii2-composer": true,
+            "craftcms/plugin-installer": true
+        }
+    }
+}
+
