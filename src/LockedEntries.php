@@ -8,8 +8,10 @@ use alxmerino\lockedentries\records\LockedEntry;
 use craft\base\Element;
 use craft\base\Model;
 use craft\base\Plugin;
+use craft\elements\db\ElementQuery;
 use craft\elements\Entry;
 use craft\events\AuthorizationCheckEvent;
+use craft\events\CancelableEvent;
 use craft\events\DefineHtmlEvent;
 use craft\events\ModelEvent;
 use craft\helpers\Cp;
@@ -46,19 +48,6 @@ class LockedEntries extends Plugin
         Craft::$app->onInit(function() {
             $this->attachEventHandlers();
         });
-    }
-
-    protected function createSettingsModel(): ?Model
-    {
-        return Craft::createObject(Settings::class);
-    }
-
-    protected function settingsHtml(): ?string
-    {
-        return Craft::$app->view->renderTemplate('locked-entries/_settings.twig', [
-            'plugin' => $this,
-            'settings' => $this->getSettings(),
-        ]);
     }
 
     /**
@@ -146,11 +135,56 @@ class LockedEntries extends Plugin
                         return;
                     }
 
-                    // Can the user see this?
-                    $event->authorized = $lockedEntry->user_id === $user->id;
+                    $limitAdmins = $this->getSettings()->limitAdmins;
+
+                    // Only user's who locked this entry and if admins are allowed
+                    // should be able to see this
+                    $event->authorized = (
+                        $lockedEntry->user_id === $user->id ||
+                        ($user->admin && !$limitAdmins)
+                    );
                 }
             }
         );
+
+        /**
+         * Modify query to exclude entries that are 'locked'
+         */
+        Event::on(
+            ElementQuery::class,
+            ElementQuery::EVENT_BEFORE_PREPARE,
+            function(CancelableEvent $event) {
+                // Bail early if setting is off and display locked entries
+                if (!$this->getSettings()->hideLockedEntries) {
+                    return true;
+                }
+
+                $query = $event->sender;
+                if ($query->elementType == 'craft\elements\Entry') {
+                    $user = Craft::$app->getUser()->getIdentity();
+                    $lockedEntries = LockedEntry::find()
+                        ->where(['not', ['user_id' => $user->id]])
+                        ->collect()->pluck('entry_id')->toArray();
+
+                    if (!empty($lockedEntries)) {
+                        $query->id(['not', ...$lockedEntries]);
+                    }
+                }
+            }
+        );
+    }
+
+    protected function createSettingsModel(): ?Model
+    {
+        return new Settings();
+    }
+
+    protected function settingsHtml(): ?string
+    {
+        return Craft::$app->view->renderTemplate('locked-entries/_settings.twig', [
+            'plugin' => $this,
+            'settings' => $this->getSettings(),
+        ]);
     }
 
     /**

@@ -3,4 +3,21 @@
 
 {% import '_includes/forms.twig' as forms %}
 
-{# ... #}
+{% block content %}
+    {{ forms.lightswitchField({
+        first: true,
+        label: 'Limit Admins'|t('locked-entries'),
+        instructions: 'By default, Admins can see all locked Entries, this limits Admins ability to see locked Entries.'|t('locked-entries'),
+        name: 'limitAdmins',
+        on: settings.limitAdmins,
+    }) }}
+
+    {{ forms.lightswitchField({
+        first: true,
+        label: 'Hide locked entries'|t('locked-entries'),
+        instructions: 'Hides entries from displaying if locked.'|t('locked-entries'),
+        name: 'hideLockedEntries',
+        on: settings.hideLockedEntries,
+    }) }}
+
+{% endblock %}

@@ -10,4 +10,7 @@ use craft\base\Model;
  */
 class Settings extends Model
 {
+    public bool $limitAdmins = false;
+    public bool $hideLockedEntries = false;
+    public string $userGroup = '';
 }
