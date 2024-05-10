@@ -61,11 +61,13 @@ class LockedEntries extends Plugin
             Element::class,
             Element::EVENT_DEFINE_SIDEBAR_HTML,
             function (DefineHtmlEvent $event) {
-                $user = Craft::$app->getUser()->getIdentity();
+                if ($event->sender instanceof Entry) {
+                    $user = Craft::$app->getUser()->getIdentity();
 
-                // Only show the lightswitch to users who are in a particular group or admins
-                if ($user->admin || $user->isInGroup((int)$this->getSettings()->userGroup)) {
-                    $event->html = $this->getLockedFieldHtml($event->sender) . $event->html;
+                    // Only show the lightswitch to users who are in a particular group or admins
+                    if ($user->admin || $user->isInGroup((int)$this->getSettings()->userGroup)) {
+                        $event->html = $this->getLockedFieldHtml($event->sender) . $event->html;
+                    }
                 }
             }
         );
