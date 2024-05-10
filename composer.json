@@ -3,6 +3,12 @@
     "description": "Gives users the ability to mark entries as 'locked' so only they can edit them",
     "type": "craft-plugin",
     "license": "proprietary",
+    "authors": [
+      {
+      "name": "Rene Merino",
+      "homepage": "https://alxmerino.com/"
+      }
+    ],
     "support": {
         "email": "rene@amayamedia.com",
         "issues": "https://github.com/alxmerino/craft-locked-entries/issues?state=open",
@@ -12,7 +18,7 @@
     },
     "require": {
         "php": ">=8.0.2",
-        "craftcms/cms": "^4.x"
+        "craftcms/cms": "^4.0.0"
     },
     "require-dev": {
         "craftcms/ecs": "dev-main",
