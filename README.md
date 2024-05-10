@@ -4,6 +4,11 @@
 
 Gives users the ability to mark entries as 'locked' so only they can edit them
 
+## Key Features:
+- **Lock Entries**: Users can mark entries as locked, signaling that they are responsible for editing and maintaining those entries.
+- **Editing Permissions**: Once an entry is locked, other users will be restricted from making changes, ensuring a single point of responsibility.
+- **Flexible Management**: Administrators have the ability to override locks, ensuring smooth collaboration when necessary.
+
 ## Requirements
 
 This plugin requires Craft CMS 4.x or later, and PHP 8.0.2 or later.
