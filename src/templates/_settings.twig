@@ -20,4 +20,13 @@
         on: settings.hideLockedEntries,
     }) }}
 
+    {{ forms.selectField({
+        label: "User Group"|t('locked-entries'),
+        instructions: 'The user group in which users are allowed to lock entries',
+        id: 'userGroup',
+        name: 'userGroup',
+        options: settings.getUserGroupOptions(),
+        value: settings.userGroup,
+        errors: settings.getErrors('userGroup'),
+    }) }}
 {% endblock %}

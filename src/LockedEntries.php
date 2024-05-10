@@ -61,7 +61,12 @@ class LockedEntries extends Plugin
             Element::class,
             Element::EVENT_DEFINE_SIDEBAR_HTML,
             function (DefineHtmlEvent $event) {
-                $event->html = $this->getLockedFieldHtml($event->sender) . $event->html;
+                $user = Craft::$app->getUser()->getIdentity();
+
+                // Only show the lightswitch to users who are in a particular group or admins
+                if ($user->admin || $user->isInGroup((int)$this->getSettings()->userGroup)) {
+                    $event->html = $this->getLockedFieldHtml($event->sender) . $event->html;
+                }
             }
         );
 
@@ -70,15 +75,21 @@ class LockedEntries extends Plugin
             Entry::class,
             Entry::EVENT_BEFORE_SAVE,
             function(ModelEvent $e) {
-                $entry = $e->sender;
-                $request = Craft::$app->getRequest();
                 $user = Craft::$app->getUser()->getIdentity();
-
-                // Bail early if no user
+                // Bail early if no user or not in the right group
                 if (!$user) {
                     return;
                 }
 
+                // Is this user allowed to lock entries?
+                $canLockEntry = $user->isInGroup((int)$this->getSettings()->userGroup) || $user->admin;
+                if (!$canLockEntry) {
+                    return;
+                }
+
+
+                $entry = $e->sender;
+                $request = Craft::$app->getRequest();
                 // Check if the "locked" field was submitted and set
                 $isLocked = $request->getBodyParam(Constants::PLUGIN_FIELD_NAME, false);
 
