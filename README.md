@@ -1,4 +1,6 @@
-# Locked Entries
+<p align="center"><img src="./src/icon.svg" width="100" height="100" alt="Feed Me icon"></p>
+
+<h1 align="center">Locked Entries for Craft CMS</h1>
 
 Gives users the ability to mark entries as 'locked' so only they can edit them
 
