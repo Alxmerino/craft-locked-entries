@@ -2,7 +2,7 @@
     "name": "alxmerino/craft-locked-entries",
     "description": "Gives users the ability to mark entries as 'locked' so only they can edit them",
     "type": "craft-plugin",
-    "license": "mit",
+    "license": "proprietary",
     "support": {
         "email": "rene@amayamedia.com",
         "issues": "https://github.com/alxmerino/craft-locked-entries/issues?state=open",
