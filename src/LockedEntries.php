@@ -171,16 +171,15 @@ class LockedEntries extends Plugin
                 }
 
                 $query = $event->sender;
-                // Remove locked entries on the entry element only and in a collection of entries,
-                // meaning the limit is more than 1
-                if ($query->elementType == 'craft\elements\Entry' && $query->limit > 1) {
+                // Remove locked entries on the Entry class only and in a collection of entries,
+                if ($query->elementType == 'craft\elements\Entry') {
                     $user = Craft::$app->getUser()->getIdentity();
                     $lockedEntries = LockedEntry::find()
                         ->where(['not', ['user_id' => $user->id]])
                         ->collect()->pluck('entry_id')->toArray();
 
                     if (!empty($lockedEntries)) {
-                        $query->id(['not', ...$lockedEntries]);
+                        $query->where(['not in', 'elements.id', $lockedEntries]);
                     }
                 }
             }
