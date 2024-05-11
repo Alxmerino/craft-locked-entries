@@ -8,15 +8,17 @@ use alxmerino\lockedentries\records\LockedEntry;
 use craft\base\Element;
 use craft\base\Model;
 use craft\base\Plugin;
-use craft\elements\db\ElementQuery;
 use craft\elements\Entry;
+use craft\elements\db\ElementQuery;
 use craft\events\AuthorizationCheckEvent;
 use craft\events\CancelableEvent;
 use craft\events\DefineHtmlEvent;
 use craft\events\ModelEvent;
+use craft\events\UserGroupEvent;
 use craft\helpers\Cp;
 use craft\helpers\Html;
 use craft\services\Elements;
+use craft\services\UserGroups;
 use yii\base\Event;
 
 /**
@@ -160,9 +162,7 @@ class LockedEntries extends Plugin
             }
         );
 
-        /**
-         * Modify query to exclude entries that are 'locked'
-         */
+        // Modify query to exclude entries that are 'locked'
         Event::on(
             ElementQuery::class,
             ElementQuery::EVENT_BEFORE_PREPARE,
@@ -182,6 +182,25 @@ class LockedEntries extends Plugin
 
                     if (!empty($lockedEntries)) {
                         $query->where(['not in', 'elements.id', $lockedEntries]);
+                    }
+                }
+            }
+        );
+
+        // Reset Plugin `userGroup` settings if the selected group was deleted
+        Event::on(
+            UserGroups::class,
+            UserGroups::EVENT_BEFORE_APPLY_GROUP_DELETE,
+            function (UserGroupEvent $e) {
+                if ($e->userGroup->id == (int)$this->getSettings()->userGroup) {
+                    $settings = array_merge(
+                        $this->getSettings()->toArray(),
+                        ['userGroup' => '']
+                    );
+
+                    // Emmit message if saved successfully
+                    if (Craft::$app->getPlugins()->savePluginSettings($this, $settings)) {
+                        Craft::$app->getSession()->setSuccess('Locked Entries plugin settings updated!', $settings);
                     }
                 }
             }
