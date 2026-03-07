@@ -66,6 +66,10 @@ class LockedEntries extends Plugin
                 if ($event->sender instanceof Entry) {
                     $user = Craft::$app->getUser()->getIdentity();
 
+                    if (!$user) {
+                        return;
+                    }
+
                     // Only show the lightswitch to users who are in a particular group or admins
                     if ($user->admin || $user->isInGroup((int)$this->getSettings()->userGroup)) {
                         $event->html = $this->getLockedFieldHtml($event->sender) . $event->html;
@@ -79,6 +83,11 @@ class LockedEntries extends Plugin
             Entry::class,
             Entry::EVENT_BEFORE_SAVE,
             function(ModelEvent $e) {
+                // Skip console requests (no body params or user session)
+                if (Craft::$app->getRequest()->getIsConsoleRequest()) {
+                    return;
+                }
+
                 $user = Craft::$app->getUser()->getIdentity();
                 // Bail early if no user or not in the right group
                 if (!$user) {
@@ -136,13 +145,18 @@ class LockedEntries extends Plugin
             Elements::class,
             Elements::EVENT_AUTHORIZE_VIEW,
             function(AuthorizationCheckEvent $event) {
+                // Only apply in the Control Panel
+                if (!Craft::$app->getRequest()->getIsCpRequest()) {
+                    return;
+                }
+
                 $entry = $event->element;
                 $lockedEntry = LockedEntry::find()
                     ->where(['entry_id' => $entry->id])
                     ->one();
 
-                // Check if this entry is locked and in the CP only
-                if (Craft::$app->request->isCpRequest && $lockedEntry) {
+                // Check if this entry is locked
+                if ($lockedEntry) {
                     $user = Craft::$app->getUser()->getIdentity();
 
                     // Bail early if no user
@@ -167,15 +181,25 @@ class LockedEntries extends Plugin
             ElementQuery::class,
             ElementQuery::EVENT_BEFORE_PREPARE,
             function(CancelableEvent $event) {
+                // Only apply in the Control Panel
+                if (!Craft::$app->getRequest()->getIsCpRequest()) {
+                    return;
+                }
+
                 // Bail early if setting is off and display locked entries
                 if (!$this->getSettings()->hideLockedEntries) {
-                    return true;
+                    return;
                 }
 
                 $query = $event->sender;
                 // Remove locked entries on the Entry class only and in a collection of entries,
                 if ($query->elementType == 'craft\elements\Entry') {
                     $user = Craft::$app->getUser()->getIdentity();
+
+                    if (!$user) {
+                        return;
+                    }
+
                     $lockedEntries = LockedEntry::find()
                         ->where(['not', ['user_id' => $user->id]])
                         ->collect()->pluck('entry_id')->toArray();
@@ -222,10 +246,10 @@ class LockedEntries extends Plugin
 
     /**
      * Get the HTML for to display on the entry's sidebar
-     * @param object|null $entry
+     * @param Entry $entry
      * @return string
      */
-    protected function getLockedFieldHtml(null|object $entry): string
+    protected function getLockedFieldHtml(Entry $entry): string
     {
         $lockedEntry = LockedEntry::find()->where(['entry_id' => $entry->id])->exists();
         $lockedField = Cp::lightswitchFieldHtml([
