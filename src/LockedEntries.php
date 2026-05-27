@@ -32,7 +32,7 @@ use yii\base\Event;
  */
 class LockedEntries extends Plugin
 {
-    public string $schemaVersion = '1.0.1';
+    public string $schemaVersion = '1.2.0';
     public bool $hasCpSettings = true;
 
     public static function config(): array
