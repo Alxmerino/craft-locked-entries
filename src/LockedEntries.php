@@ -32,7 +32,7 @@ use yii\base\Event;
  */
 class LockedEntries extends Plugin
 {
-    public string $schemaVersion = '1.0.0';
+    public string $schemaVersion = '1.0.1';
     public bool $hasCpSettings = true;
 
     public static function config(): array
@@ -102,6 +102,10 @@ class LockedEntries extends Plugin
 
 
                 $entry = $e->sender;
+                // Check if the entry being saved is a draft, and use its canonicalId if so
+                $entryId = ($entry->isDraft && $entry->canonicalId) ? $entry->canonicalId : $entry->id;
+                // The entry could exist in multiple sites, and locking should only affect the current site
+                $currentSiteId = Craft::$app->sites->currentSite->id;
                 $request = Craft::$app->getRequest();
                 // Check if the "locked" field was submitted and set
                 $isLocked = $request->getBodyParam(Constants::PLUGIN_FIELD_NAME, false);
@@ -110,20 +114,21 @@ class LockedEntries extends Plugin
                 if ($isLocked) {
                     // Check if this entry is already locked
                     $recordExists = LockedEntry::find()
-                        ->where(['entry_id' => $entry->id])
+                        ->where(['entry_id' => $entryId, 'site_id' => $currentSiteId])
                         ->exists();
 
                     // If it's locked and doesn't exist in the table, add it
                     if (!$recordExists) {
                         $lockedEntry = new LockedEntry([
-                            'entry_id' => $entry->id,
+                            'entry_id' => $entryId,
                             'user_id' => $user->id,
+                            'site_id' => $currentSiteId,
                         ]);
                         $lockedEntry->save();
                     }
                 } else {
                     // If not locked, remove it from the custom database table
-                    LockedEntry::deleteAll(['entry_id' => $entry->id]);
+                    LockedEntry::deleteAll(['entry_id' => $entryId, 'site_id' => $currentSiteId]);
                 }
             }
         );
@@ -136,7 +141,7 @@ class LockedEntries extends Plugin
                 $entry = $event->sender;
 
                 // Remove the record from our table
-                LockedEntry::deleteAll(['entry_id' => $entry->id]);
+                LockedEntry::deleteAll(['entry_id' => $entry->id, 'site_id' => $entry->siteId]);
             }
         );
 
@@ -152,7 +157,7 @@ class LockedEntries extends Plugin
 
                 $entry = $event->element;
                 $lockedEntry = LockedEntry::find()
-                    ->where(['entry_id' => $entry->id])
+                    ->where(['entry_id' => $entry->id, 'site_id' => $entry->siteId])
                     ->one();
 
                 // Check if this entry is locked
@@ -251,13 +256,15 @@ class LockedEntries extends Plugin
      */
     protected function getLockedFieldHtml(Entry $entry): string
     {
-        $lockedEntry = LockedEntry::find()->where(['entry_id' => $entry->id])->exists();
+        // Check the canonicalId if we editing a draft
+        $entryId = ($entry->isDraft && $entry->canonicalId) ? $entry->canonicalId : $entry->id;
+        $lockedEntry = LockedEntry::find()->where(['entry_id' => $entryId, 'site_id' => $entry->siteId])->exists();
         $lockedField = Cp::lightswitchFieldHtml([
-                'id' => Constants::PLUGIN_FIELD_NAME,
-                'label' => Craft::t(Constants::PLUGIN_HANDLE, 'Locked'),
-                'name' => Constants::PLUGIN_FIELD_NAME,
-                'on' => $lockedEntry ?? false,
-            ]);
+            'id' => Constants::PLUGIN_FIELD_NAME,
+            'label' => Craft::t(Constants::PLUGIN_HANDLE, 'Locked'),
+            'name' => Constants::PLUGIN_FIELD_NAME,
+            'on' => $lockedEntry ?? false,
+        ]);
 
         return Html::beginTag('fieldset') .
             Html::tag('div', $lockedField, ['class' => 'meta']) .
